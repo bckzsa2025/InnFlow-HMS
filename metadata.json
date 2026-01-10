@@ -1,0 +1,8 @@
+{
+  "name": "InnFlow™-Final",
+  "description": "A comprehensive, multi-tenant hospitality management platform for guesthouses, lodges, and B&Bs featuring visual layout booking, real-time availability, and financial reporting.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
