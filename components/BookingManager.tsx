@@ -7,10 +7,12 @@ interface BookingManagerProps {
   bookings: Booking[];
   rooms: Room[];
   onUpdate: (bookings: Booking[]) => void;
+  onCreate?: (booking: Booking) => void;
   onLog?: (action: string, details: string) => void;
+  calculateTotal: (roomId: string, checkIn: string, checkOut: string) => number;
 }
 
-const BookingManager: React.FC<BookingManagerProps> = ({ bookings, rooms, onUpdate, onLog }) => {
+const BookingManager: React.FC<BookingManagerProps> = ({ bookings, rooms, onUpdate, onCreate, onLog, calculateTotal }) => {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,7 +24,6 @@ const BookingManager: React.FC<BookingManagerProps> = ({ bookings, rooms, onUpda
     checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     status: BookingStatus.CONFIRMED,
     paymentStatus: PaymentStatus.PENDING,
-    // Fix: PaymentMethod.CASH does not exist, using PaymentMethod.CASH_ON_ARRIVAL instead.
     paymentMethod: PaymentMethod.CASH_ON_ARRIVAL
   });
   
@@ -35,24 +36,39 @@ const BookingManager: React.FC<BookingManagerProps> = ({ bookings, rooms, onUpda
     ).reverse();
   }, [bookings, searchQuery]);
 
+  // Live calculation for the modal to show admin
+  const estimatedTotal = useMemo(() => {
+    if (newBooking.roomId && newBooking.checkInDate && newBooking.checkOutDate) {
+      return calculateTotal(newBooking.roomId, newBooking.checkInDate, newBooking.checkOutDate);
+    }
+    return 0;
+  }, [newBooking.roomId, newBooking.checkInDate, newBooking.checkOutDate, calculateTotal]);
+
   const handleCreateBooking = () => {
     const room = rooms.find(r => r.id === newBooking.roomId);
     if (!room) return;
     
+    // Ensure accurate price calculation is used for the record
+    const finalTotal = calculateTotal(room.id, newBooking.checkInDate!, newBooking.checkOutDate!);
+
     const booking: Booking = {
       ...(newBooking as Booking),
       id: `b_${Date.now()}`,
       propertyId: room.propertyId,
-      reference: '', // App.tsx will generate the INF-YYYY-XXXX ref
-      totalAmount: room.pricePerNight, 
+      // Pass empty reference so onCreate (handleBook in App.tsx) can generate the INF-XXXX ID
+      reference: '', 
+      totalAmount: finalTotal, 
       createdAt: new Date().toISOString(),
       guestId: 'ADM-INPUT'
     } as Booking;
     
-    // We call the same central book handler in App via prop if possible, 
-    // but here we just pass it up to the parent array update.
-    onUpdate([...bookings, booking]);
-    onLog?.('BOOKING_CREATED', `Direct admin booking created for ${booking.guestName}`);
+    // Use onCreate if available to trigger reference generation in App.tsx
+    if (onCreate) {
+        onCreate(booking);
+    } else {
+        onUpdate([...bookings, booking]);
+        onLog?.('BOOKING_CREATED', `Direct admin booking created for ${booking.guestName}`);
+    }
     setIsCreating(false);
   };
 
@@ -81,7 +97,6 @@ const BookingManager: React.FC<BookingManagerProps> = ({ bookings, rooms, onUpda
       case PaymentMethod.CARD_ON_ARRIVAL:
       case PaymentMethod.IKHOKHA: return <CreditCard size={14} />;
       case PaymentMethod.EFT: return <ArrowRightLeft size={14} />;
-      // Fix: PaymentMethod.CASH does not exist, using PaymentMethod.CASH_ON_ARRIVAL instead.
       case PaymentMethod.CASH_ON_ARRIVAL: return <Wallet size={14} />;
       default: return <DollarSign size={14} />;
     }
@@ -214,6 +229,12 @@ const BookingManager: React.FC<BookingManagerProps> = ({ bookings, rooms, onUpda
                 <InputGroup label="Check-In" type="date" value={newBooking.checkInDate || ''} onChange={v => setNewBooking({...newBooking, checkInDate: v})} />
                 <InputGroup label="Check-Out" type="date" value={newBooking.checkOutDate || ''} onChange={v => setNewBooking({...newBooking, checkOutDate: v})} />
               </div>
+              
+              <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-900 uppercase tracking-widest">Estimated Total</span>
+                <span className="text-xl font-black text-blue-600">R {estimatedTotal.toLocaleString()}</span>
+              </div>
+
               <button type="submit" disabled={!newBooking.roomId} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition flex items-center justify-center gap-2">
                 <Save size={20} /> Create Reservation
               </button>

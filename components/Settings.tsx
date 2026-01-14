@@ -230,7 +230,7 @@ const Settings: React.FC<SettingsProps> = ({ property, userRole, onUpdate, onLog
                     Platform Infrastructure Root
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <InputGroup dark label="Global App Identifier" value="INNFLOW_SaaS_01" onChange={() => {}} />
+                    <InputGroup dark label="Global App Identifier" value="INNFLEX_SaaS_01" onChange={() => {}} />
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Hard Reset Reference Counter</label>
                         <button 

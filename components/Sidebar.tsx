@@ -22,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, onLogout }) => {
           </div>
           <div className="flex flex-col">
             <h1 className="text-2xl font-black text-white leading-none tracking-tighter">
-              InnFlow<span className="text-blue-500">™</span>
+              InnFlex<span className="text-blue-500">™</span>
             </h1>
             <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1">Core Engine</span>
           </div>

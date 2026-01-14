@@ -1,14 +1,15 @@
 
 import React from 'react';
 import { User, Property } from '../types';
-import { Bell, Search, User as UserIcon } from 'lucide-react';
+import { Bell, Search, User as UserIcon, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   user: User;
   property: Property;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, property }) => {
+const Header: React.FC<HeaderProps> = ({ user, property, onLogout }) => {
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -48,6 +49,13 @@ const Header: React.FC<HeaderProps> = ({ user, property }) => {
           <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200 overflow-hidden">
             <UserIcon size={20} />
           </div>
+          <button 
+            onClick={onLogout} 
+            className="ml-2 h-9 w-9 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+            title="Log Out"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
     </header>

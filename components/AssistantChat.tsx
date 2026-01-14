@@ -1,6 +1,5 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
 import { Send, X, Bot, Loader2, Sparkles } from 'lucide-react';
 import { Room, SeasonalRate } from '../types';
 
@@ -13,7 +12,7 @@ interface AssistantChatProps {
 const AssistantChat: React.FC<AssistantChatProps> = ({ rooms, seasonalRates = [], onBookingIntent }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
-    {role: 'assistant', content: "Welcome to our sanctuary. I am the InnFlow Concierge. Looking to secure a stay or check availability?"}
+    {role: 'assistant', content: "Welcome to InnFlex. I am your automated concierge. How can I assist you with your booking today?"}
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,59 +29,26 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ rooms, seasonalRates = []
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setIsLoading(true);
 
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const systemInstruction = `You are the "InnFlow Luxury Concierge". 
-TONE: Ultra-premium, helpful, efficient. 
-CONTEXT: 
-- Current Inventory: ${JSON.stringify(rooms.map(r => ({ id: r.id, num: r.roomNumber, type: r.roomType, rate: r.pricePerNight })))}
-- Seasonal Modifiers: ${JSON.stringify(seasonalRates)}
-GOAL: Guide guests to select a room and provide their contact details.
-CAPABILITY: You can trigger a provisional booking. 
-- Always mention rates are dynamic.
-- If they want to book, use 'create_booking' tool.
-- Required for booking: Name, Phone, Email, Room ID, Dates.`;
+    // Simulate network delay for natural feel
+    setTimeout(() => {
+      const lowerMsg = userMsg.toLowerCase();
+      let responseText = "I can assist with room information and booking procedures. Please use the interactive grid to select a room.";
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          { role: 'user', parts: [{ text: `Instruction: ${systemInstruction}` }] },
-          ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] })),
-          { role: 'user', parts: [{ text: userMsg }] }
-        ],
-        config: {
-          tools: [{
-            functionDeclarations: [{
-              name: 'create_booking',
-              description: 'Initializes a provisional guesthouse reservation',
-              parameters: {
-                type: Type.OBJECT,
-                properties: {
-                  guest_name: { type: Type.STRING },
-                  phone: { type: Type.STRING },
-                  email: { type: Type.STRING },
-                  room_id: { type: Type.STRING },
-                  check_in: { type: Type.STRING },
-                  check_out: { type: Type.STRING }
-                },
-                required: ['guest_name', 'phone', 'email', 'room_id', 'check_in', 'check_out']
-              }
-            }]
-          }]
-        }
-      });
-
-      if (response.functionCalls?.[0]) {
-        onBookingIntent(response.functionCalls[0].args);
-        setMessages(prev => [...prev, { role: 'assistant', content: "Marvelous choice. I've initiated your provisional stay. You'll receive a WhatsApp confirmation shortly to finalize your stay. 🥂" }]);
-      } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: response.text || "I apologize, my link to the inventory hub is momentarily unstable. How else can I assist?" }]);
+      if (lowerMsg.includes('book') || lowerMsg.includes('reservation') || lowerMsg.includes('room')) {
+        responseText = "To make a reservation, please tap on an available room in the schematic selector above, verify the dates, and click 'Confirm Availability'.";
+      } else if (lowerMsg.includes('price') || lowerMsg.includes('cost') || lowerMsg.includes('rate')) {
+        responseText = "Our rates are dynamic based on the season. Please select a room to view the specific pricing for your dates.";
+      } else if (lowerMsg.includes('check in') || lowerMsg.includes('check out') || lowerMsg.includes('time')) {
+        responseText = "Check-in time starts at 14:00. Check-out is required by 10:00 on your day of departure.";
+      } else if (lowerMsg.includes('contact') || lowerMsg.includes('phone') || lowerMsg.includes('email')) {
+        responseText = "You can reach reception directly at +27 82 000 0000 or via email at hello@oceanwhisper.com.";
+      } else if (lowerMsg.includes('help')) {
+        responseText = "I can help with: Booking instructions, Check-in times, Contact details, and Pricing inquiries.";
       }
-    } catch (e) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "I am experiencing a slight communication delay. Please use our manual booking tool below." }]);
-    } finally {
+
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   return (
@@ -97,8 +63,8 @@ CAPABILITY: You can trigger a provisional booking.
             <div className="flex items-center gap-4">
               <div className="h-10 w-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg"><Bot size={24} /></div>
               <div>
-                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Concierge AI</h4>
-                <p className="font-bold text-sm tracking-tight leading-none mt-1">InnFlow Assistant</p>
+                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Auto-Concierge</h4>
+                <p className="font-bold text-sm tracking-tight leading-none mt-1">InnFlex Assistant</p>
               </div>
             </div>
             <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>

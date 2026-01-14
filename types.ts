@@ -83,6 +83,7 @@ export interface Booking {
   guestId: string;
   guestEmail: string;
   guestPhone: string;
+  guestCount?: number;
   roomId: string;
   checkInDate: string;
   checkOutDate: string;
@@ -136,4 +137,6 @@ export interface User {
   email: string;
   role: UserRole;
   name: string;
+  username: string;
+  password?: string;
 }

@@ -16,16 +16,48 @@ import Header from './components/Header';
 import NotificationCenter from './components/NotificationCenter';
 import AuditLogViewer from './components/AuditLogViewer';
 import StaffManager from './components/StaffManager';
-import { ShieldCheck, Building, Briefcase, Zap, Star } from 'lucide-react';
+import { ShieldCheck, Building, Briefcase, Zap, Star, UserPlus, LogIn, Lock, Mail, User as UserIcon, Phone, Users } from 'lucide-react';
+
+const DEFAULT_USERS: User[] = [
+  { id: 'admin_01', username: 'Admin', password: 'A.dmin@2026', role: UserRole.BUSINESS_ADMIN, name: 'System Administrator', email: 'admin@innflex.com' },
+  { id: 'staff_01', username: 'Staff', password: 'S.taff@2026', role: UserRole.STAFF, name: 'Reception Desk', email: 'staff@innflex.com' },
+  { id: 'guest_01', username: 'Guest', password: 'G.uest@2026', role: UserRole.GUEST, name: 'Guest User', email: 'guest@innflex.com' },
+  { id: 'dev_01', username: 'Sudo', password: 'S.udo@2026', role: UserRole.DEVELOPER, name: 'Lead Developer', email: 'dev@innflex.com' }
+];
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('innflow_user');
+    const saved = localStorage.getItem('innflex_session');
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('innflex_users');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const customUsers = parsed.filter((u: User) => !DEFAULT_USERS.some(d => d.id === u.id));
+      return [...DEFAULT_USERS, ...customUsers];
+    }
+    return DEFAULT_USERS;
+  });
+
+  const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
+  const [loginCreds, setLoginCreds] = useState({ username: '', password: '' });
+  const [registerData, setRegisterData] = useState({ name: '', username: '', email: '', password: '', role: UserRole.GUEST });
+  const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    if (!localStorage.getItem('innflex_users')) {
+      localStorage.setItem('innflex_users', JSON.stringify(DEFAULT_USERS));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('innflex_users', JSON.stringify(users));
+  }, [users]);
+
   const [property, setProperty] = useState<Property>(() => {
-    const saved = localStorage.getItem('innflow_property');
+    const saved = localStorage.getItem('innflex_property');
     return saved ? JSON.parse(saved) : {
       id: MOCK_PROPERTY_ID,
       name: 'Ocean Whisper Lodge',
@@ -50,17 +82,17 @@ const App: React.FC = () => {
   });
 
   const [rooms, setRooms] = useState<Room[]>(() => {
-    const saved = localStorage.getItem('innflow_rooms');
+    const saved = localStorage.getItem('innflex_rooms');
     return saved ? JSON.parse(saved) : INITIAL_ROOMS;
   });
 
   const [bookings, setBookings] = useState<Booking[]>(() => {
-    const saved = localStorage.getItem('innflow_bookings');
+    const saved = localStorage.getItem('innflex_bookings');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [staff, setStaff] = useState<StaffMember[]>(() => {
-    const saved = localStorage.getItem('innflow_staff');
+    const saved = localStorage.getItem('innflex_staff');
     return saved ? JSON.parse(saved) : [
       { id: 's1', name: 'John Doe', email: 'john@oceanwhisper.com', role: UserRole.STAFF, lastLogin: '2 hours ago', access: ['Bookings', 'Calendar'] },
       { id: 's2', name: 'Sarah Miller', email: 'sarah@oceanwhisper.com', role: UserRole.BUSINESS_ADMIN, lastLogin: '10 mins ago', access: ['Full System'] }
@@ -68,7 +100,7 @@ const App: React.FC = () => {
   });
 
   const [tenants, setTenants] = useState<Tenant[]>(() => {
-    const saved = localStorage.getItem('innflow_tenants');
+    const saved = localStorage.getItem('innflex_tenants');
     return saved ? JSON.parse(saved) : [
       { id: '1', name: 'Ocean Whisper Lodge', status: 'Active', plan: 'Enterprise', users: 12 },
       { id: '2', name: 'Mountain Retreat B&B', status: 'Trialing', plan: 'Starter', users: 3 }
@@ -76,12 +108,12 @@ const App: React.FC = () => {
   });
 
   const [cashUps, setCashUps] = useState<CashUpRecord[]>(() => {
-    const saved = localStorage.getItem('innflow_cashups');
+    const saved = localStorage.getItem('innflex_cashups');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
-    const saved = localStorage.getItem('innflow_audit');
+    const saved = localStorage.getItem('innflex_audit');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -89,13 +121,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     document.documentElement.style.setProperty('--primary-color', property.primaryColor);
-    localStorage.setItem('innflow_property', JSON.stringify(property));
-    localStorage.setItem('innflow_rooms', JSON.stringify(rooms));
-    localStorage.setItem('innflow_bookings', JSON.stringify(bookings));
-    localStorage.setItem('innflow_staff', JSON.stringify(staff));
-    localStorage.setItem('innflow_tenants', JSON.stringify(tenants));
-    localStorage.setItem('innflow_cashups', JSON.stringify(cashUps));
-    localStorage.setItem('innflow_audit', JSON.stringify(auditLogs));
+    localStorage.setItem('innflex_property', JSON.stringify(property));
+    localStorage.setItem('innflex_rooms', JSON.stringify(rooms));
+    localStorage.setItem('innflex_bookings', JSON.stringify(bookings));
+    localStorage.setItem('innflex_staff', JSON.stringify(staff));
+    localStorage.setItem('innflex_tenants', JSON.stringify(tenants));
+    localStorage.setItem('innflex_cashups', JSON.stringify(cashUps));
+    localStorage.setItem('innflex_audit', JSON.stringify(auditLogs));
   }, [property, rooms, bookings, staff, tenants, cashUps, auditLogs]);
 
   const addAuditLog = useCallback((action: string, details: string) => {
@@ -112,7 +144,7 @@ const App: React.FC = () => {
   }, [currentUser, property.id]);
 
   const triggerWhatsAppWebhook = useCallback(async (booking: Booking) => {
-    const paymentLink = `https://pay.innflow.com/${booking.reference}`;
+    const paymentLink = `https://pay.innflex.com/${booking.reference}`;
     const messageText = property.whatsappTemplate
       .replace('{{guest}}', booking.guestName)
       .replace('{{ref}}', booking.reference)
@@ -120,7 +152,6 @@ const App: React.FC = () => {
       .replace('{{date}}', booking.checkInDate)
       .replace('{{link}}', paymentLink);
 
-    // Production-ready fetch implementation for WhatsApp Developer Hub
     try {
       const response = await fetch(property.webhookUrl || '', {
         method: 'POST',
@@ -133,7 +164,7 @@ const App: React.FC = () => {
           to: booking.guestPhone.replace(/\s+/g, ''),
           type: "template",
           template: {
-            name: "innflow_booking_confirmed",
+            name: "innflex_booking_confirmed",
             language: { code: "en" },
             components: [
               {
@@ -181,6 +212,7 @@ const App: React.FC = () => {
   }, [property.lastRefNumber]);
 
   const handleBook = useCallback((newBooking: Booking) => {
+    // If reference is already generated by GuestPortal, use it, otherwise generate one
     const ref = newBooking.reference || generateReference();
     const bookingWithRef = { ...newBooking, reference: ref };
 
@@ -189,22 +221,79 @@ const App: React.FC = () => {
     triggerWhatsAppWebhook(bookingWithRef);
   }, [generateReference, triggerWhatsAppWebhook, addAuditLog]);
 
-  const handleLogin = (role: UserRole) => {
-    const user = {
-      id: `u_${Math.random().toString(36).substr(2, 9)}`,
-      email: `${role.toLowerCase()}@innflow.com`,
-      role,
-      name: role.charAt(0) + role.slice(1).toLowerCase().replace('_', ' '),
-      propertyId: role === UserRole.DEVELOPER ? undefined : property.id
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = users.find(u => 
+      u.username.toLowerCase() === loginCreds.username.toLowerCase() && 
+      u.password === loginCreds.password
+    );
+
+    if (user) {
+      setCurrentUser(user);
+      localStorage.setItem('innflex_session', JSON.stringify(user));
+      setAuthError('');
+    } else {
+      setAuthError('Invalid credentials. Please verify your access.');
+    }
+  };
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (users.some(u => u.username.toLowerCase() === registerData.username.toLowerCase())) {
+      setAuthError('Username already exists in the local registry.');
+      return;
+    }
+    const newUser: User = {
+      id: `u_${Date.now()}`,
+      propertyId: property.id,
+      username: registerData.username,
+      password: registerData.password,
+      name: registerData.name,
+      email: registerData.email,
+      role: registerData.role
     };
-    setCurrentUser(user);
-    localStorage.setItem('innflow_user', JSON.stringify(user));
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    setCurrentUser(newUser);
+    localStorage.setItem('innflex_session', JSON.stringify(newUser));
+    setAuthError('');
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('innflow_user');
+    localStorage.removeItem('innflex_session');
+    setLoginCreds({ username: '', password: '' });
   };
+
+  // Robust, timezone-safe total calculation
+  const calculateTotal = useCallback((roomId: string, checkIn: string, checkOut: string) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return 0;
+    
+    // Parse dates (assumes YYYY-MM-DD input, treated as UTC by Date constructor often, but we handle iteration safely)
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) return 0;
+
+    let total = 0;
+    const current = new Date(start);
+
+    // Iterate day by day using UTC methods to ensure strict 24h steps without timezone interference
+    while (current < end) {
+      const dateStr = current.toISOString().split('T')[0];
+      const rate = property.seasonalRates.find(r => dateStr >= r.startDate && dateStr <= r.endDate);
+      const multiplier = rate ? rate.multiplier : 1;
+      
+      // Calculate per room night (Ignore guest count)
+      total += room.pricePerNight * multiplier;
+      
+      // Advance one day safely
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+    
+    return Math.round(total);
+  }, [rooms, property.seasonalRates]);
 
   if (!currentUser) {
     return (
@@ -215,54 +304,155 @@ const App: React.FC = () => {
             <div>
               <div className="flex items-center gap-3 mb-8">
                 <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-2xl">I</div>
-                <h1 className="text-3xl font-black tracking-tighter">InnFlow<span className="text-blue-500">™</span></h1>
+                <h1 className="text-3xl font-black tracking-tighter">InnFlex<span className="text-blue-500">™</span></h1>
               </div>
               <h2 className="text-7xl font-black tracking-tighter leading-tight max-w-2xl">SaaS <span className="text-blue-500 italic">Hospitality</span> Solutions.</h2>
             </div>
-          </div>
-        </div>
-        <div className="w-full lg:w-2/5 p-8 md:p-16 lg:p-24 flex flex-col justify-center animate-in slide-in-from-right duration-700">
-          <div className="max-w-md mx-auto w-full space-y-12">
-            <div>
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight">Portal Access</h3>
-              <p className="text-slate-400 mt-4 font-medium italic">Secured terminal for <span className="text-blue-600 font-black">{property.name}</span></p>
-            </div>
-            <div className="space-y-4">
-              <button onClick={() => handleLogin(UserRole.GUEST)} className="w-full group p-6 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-between hover:bg-blue-500 transition-all shadow-2xl active:scale-[0.98]">
-                <div className="flex items-center gap-4">
-                   <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center"><Star size={24} /></div>
-                   <span>Guest Booking</span>
-                </div>
-                <Zap size={20} />
-              </button>
-              <div className="grid grid-cols-1 gap-4">
-                <LoginButton icon={<Building size={20} />} label="Administrator" sub="Manage Infrastructure" onClick={() => handleLogin(UserRole.BUSINESS_ADMIN)} />
-                <LoginButton icon={<Briefcase size={20} />} label="Staff Member" sub="Operational Hub" onClick={() => handleLogin(UserRole.STAFF)} />
-                <LoginButton icon={<ShieldCheck size={20} />} label="Dev Ops" sub="System Root" onClick={() => handleLogin(UserRole.DEVELOPER)} minimal />
+            <div className="flex gap-4">
+              <div className="px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Bookings</p>
+                <p className="text-2xl font-black">{bookings.length}</p>
+              </div>
+              <div className="px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Active Rooms</p>
+                <p className="text-2xl font-black">{rooms.filter(r => r.status === 'ACTIVE').length}</p>
               </div>
             </div>
+          </div>
+        </div>
+        
+        <div className="w-full lg:w-2/5 p-8 md:p-16 lg:p-24 flex flex-col justify-center animate-in slide-in-from-right duration-700 overflow-y-auto">
+          <div className="max-w-md mx-auto w-full">
+            <div className="mb-8">
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                {authMode === 'LOGIN' ? <Lock className="text-blue-600" /> : <UserPlus className="text-blue-600" />}
+                {authMode === 'LOGIN' ? 'Secure Access' : 'Client Registration'}
+              </h3>
+              <p className="text-slate-400 mt-2 font-medium italic">
+                {authMode === 'LOGIN' ? 'Authenticate to access your managed environment.' : 'Create a local identity to interact with the platform.'}
+              </p>
+            </div>
+
+            {authError && (
+               <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-xs font-bold flex items-center gap-2 animate-in slide-in-from-top-2">
+                 <ShieldCheck size={16} /> {authError}
+               </div>
+            )}
+
+            {authMode === 'LOGIN' ? (
+              <form onSubmit={handleLogin} className="space-y-6">
+                
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                  <button 
+                    type="button"
+                    onClick={() => setLoginCreds({ username: 'Guest', password: 'G.uest@2026' })}
+                    className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-blue-500 hover:shadow-md transition-all text-left group"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                      <UserIcon size={16} />
+                    </div>
+                    <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Portal</p>
+                    <p className="text-sm font-bold text-slate-900">Guest Access</p>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => setLoginCreds({ username: '', password: '' })}
+                    className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-violet-500 hover:shadow-md transition-all text-left group"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-violet-50 text-violet-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                      <Briefcase size={16} />
+                    </div>
+                    <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Portal</p>
+                    <p className="text-sm font-bold text-slate-900">Admin Ops</p>
+                  </button>
+                  
+                  <button 
+                    type="button"
+                    onClick={() => setLoginCreds({ username: '', password: '' })}
+                    className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-emerald-500 hover:shadow-md transition-all text-left group"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                      <Users size={16} />
+                    </div>
+                    <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Portal</p>
+                    <p className="text-sm font-bold text-slate-900">Staff Desk</p>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => setLoginCreds({ username: '', password: '' })}
+                    className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-800 hover:shadow-md transition-all text-left group"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                      <ShieldCheck size={16} />
+                    </div>
+                    <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Portal</p>
+                    <p className="text-sm font-bold text-slate-900">Developer</p>
+                  </button>
+                </div>
+
+                <div className="relative flex items-center justify-center">
+                    <div className="absolute inset-0 border-t border-slate-100"></div>
+                    <span className="relative bg-white px-2 text-[10px] uppercase font-black tracking-widest text-slate-300">Or Manual Entry</span>
+                </div>
+
+                <InputGroup label="System Username" value={loginCreds.username} onChange={v => setLoginCreds({...loginCreds, username: v})} icon={<UserIcon size={14} />} autoComplete="username" />
+                <InputGroup label="Access Key" type="password" value={loginCreds.password} onChange={v => setLoginCreds({...loginCreds, password: v})} icon={<Lock size={14} />} autoComplete="current-password" />
+                
+                <button type="submit" className="w-full py-5 bg-slate-900 text-white rounded-[1.25rem] font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3">
+                  <LogIn size={20} /> Authenticate
+                </button>
+
+                <div className="pt-2 text-center">
+                  <button type="button" onClick={() => setAuthMode('REGISTER')} className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors">
+                    Register New Account
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <InputGroup label="Full Name" value={registerData.name} onChange={v => setRegisterData({...registerData, name: v})} icon={<UserIcon size={14} />} />
+                  <InputGroup label="Username" value={registerData.username} onChange={v => setRegisterData({...registerData, username: v})} icon={<Zap size={14} />} autoComplete="username" />
+                </div>
+                <InputGroup label="Email Address" type="email" value={registerData.email} onChange={v => setRegisterData({...registerData, email: v})} icon={<Mail size={14} />} autoComplete="email" />
+                <InputGroup label="Create Password" type="password" value={registerData.password} onChange={v => setRegisterData({...registerData, password: v})} icon={<Lock size={14} />} autoComplete="new-password" />
+                
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Access Role</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setRegisterData({...registerData, role: UserRole.GUEST})} className={`p-3 rounded-xl border text-xs font-bold transition-all ${registerData.role === UserRole.GUEST ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>Guest</button>
+                    <button type="button" onClick={() => setRegisterData({...registerData, role: UserRole.BUSINESS_ADMIN})} className={`p-3 rounded-xl border text-xs font-bold transition-all ${registerData.role === UserRole.BUSINESS_ADMIN ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>Admin</button>
+                  </div>
+                </div>
+
+                <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-[1.25rem] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl active:scale-95 mt-4">
+                  Create Identity
+                </button>
+                
+                <div className="pt-4 text-center">
+                   <button type="button" onClick={() => setAuthMode('LOGIN')} className="text-xs font-bold text-slate-500 hover:text-slate-900">Cancel Registration</button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  const calculateTotal = (roomId: string, checkIn: string, checkOut: string) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room) return 0;
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
-    let total = 0;
-    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
-      const rate = property.seasonalRates.find(r => dateStr >= r.startDate && dateStr <= r.endDate);
-      total += room.pricePerNight * (rate ? rate.multiplier : 1);
-    }
-    return Math.round(total);
-  };
-
   if (currentUser.role === UserRole.GUEST) {
-    return <GuestPortal property={property} rooms={rooms.filter(r => r.status === 'ACTIVE')} bookings={bookings} onBook={handleBook} onLogout={handleLogout} calculateTotal={calculateTotal} />;
+    return <GuestPortal 
+      user={currentUser} 
+      property={property} 
+      rooms={rooms.filter(r => r.status === 'ACTIVE')} 
+      bookings={bookings} 
+      onBook={handleBook} 
+      onLogout={handleLogout} 
+      calculateTotal={calculateTotal} 
+      onGetReference={generateReference}
+    />;
   }
 
   return (
@@ -270,19 +460,19 @@ const App: React.FC = () => {
       <div className="flex h-screen overflow-hidden safe-pb">
         <Sidebar role={currentUser.role} onLogout={handleLogout} />
         <div className="flex-1 flex flex-col overflow-hidden relative">
-          <Header user={currentUser} property={property} />
+          <Header user={currentUser} property={property} onLogout={handleLogout} />
           <main className="flex-1 overflow-y-auto p-6 md:p-10 pb-32">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard property={property} rooms={rooms} bookings={bookings} />} />
               <Route path="/calendar" element={<CalendarView rooms={rooms} bookings={bookings} onBookingUpdate={() => {}} onAddBooking={handleBook} calculateTotal={calculateTotal} />} />
               <Route path="/rooms" element={<RoomManager rooms={rooms} onUpdate={setRooms} />} />
-              <Route path="/bookings" element={<BookingManager bookings={bookings} rooms={rooms} onUpdate={setBookings} onLog={addAuditLog} />} />
+              <Route path="/bookings" element={<BookingManager bookings={bookings} rooms={rooms} onUpdate={setBookings} onCreate={handleBook} onLog={addAuditLog} calculateTotal={calculateTotal} />} />
               <Route path="/financials" element={<Financials bookings={bookings} cashUps={cashUps} onAddCashUp={(c) => setCashUps([c, ...cashUps])} propertyId={property.id} onLog={addAuditLog} />} />
               <Route path="/settings" element={<Settings property={property} userRole={currentUser.role} onUpdate={setProperty} onLog={addAuditLog} rooms={rooms} />} />
               <Route path="/staff" element={<StaffManager staff={staff} onUpdate={setStaff} onLog={addAuditLog} />} />
               <Route path="/logs" element={<AuditLogViewer logs={auditLogs} />} />
-              <Route path="/developer" element={<DeveloperPortal tenants={tenants} onUpdate={setTenants} onImpersonate={(name) => { setProperty(p => ({...p, name})); handleLogin(UserRole.BUSINESS_ADMIN); }} onLog={addAuditLog} />} />
+              <Route path="/developer" element={<DeveloperPortal tenants={tenants} onUpdate={setTenants} onImpersonate={(name) => { setProperty(p => ({...p, name})); }} onLog={addAuditLog} onLogout={handleLogout} />} />
             </Routes>
           </main>
           <NotificationCenter notifications={notifications} />
@@ -292,14 +482,18 @@ const App: React.FC = () => {
   );
 };
 
-const LoginButton: React.FC<{ icon: React.ReactNode, label: string, sub: string, onClick: () => void, minimal?: boolean }> = ({ icon, label, sub, onClick, minimal }) => (
-  <button onClick={onClick} className={`w-full flex items-center gap-5 p-5 rounded-[1.5rem] border transition-all text-left group ${minimal ? 'bg-slate-50 border-slate-100 text-slate-500' : 'bg-white border-slate-200 hover:border-blue-500 text-slate-900'}`}>
-    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-6 ${minimal ? 'bg-white' : 'bg-slate-900 text-white shadow-lg shadow-slate-900/10'}`}>{icon}</div>
-    <div>
-      <p className="text-sm font-black uppercase tracking-tight">{label}</p>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{sub}</p>
-    </div>
-  </button>
+const InputGroup: React.FC<{ label: string, value: string, onChange: (v: string) => void, type?: string, icon?: React.ReactNode, autoComplete?: string }> = ({ label, value, onChange, type = "text", icon, autoComplete }) => (
+  <div className="space-y-1">
+    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">{icon} {label}</label>
+    <input 
+      type={type} 
+      value={value} 
+      onChange={e => onChange(e.target.value)}
+      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+      required
+      autoComplete={autoComplete}
+    />
+  </div>
 );
 
 export default App;

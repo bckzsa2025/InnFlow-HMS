@@ -1,5 +1,5 @@
 
-# InnFlow™ Deployment Specifications
+# InnFlex™ Deployment Specifications
 
 ## 1. Relational Database Schema (Final)
 
@@ -20,8 +20,10 @@
 ## 2. Platform Build Instructions
 
 ### PWA (Progressive Web App)
-1. **Manifest**: Generate `manifest.json` referencing `index.html`.
-2. **Service Worker**: Implement basic caching for offline availability of the room layout grid.
+- **Framework**: React 19 (ESM)
+- **Build Tooling**: Browser-native ES Modules via `importmap` (No Bundler/Vite required for logic, just file serving).
+- **Manifest**: Generate `manifest.json` referencing `index.html`.
+- **Service Worker**: Implement basic caching for offline availability of the room layout grid.
 
 ### Android APK (Capacitor/Cordova)
 1. **Command**: `npx cap add android`
@@ -39,13 +41,22 @@
 - **Authorization**: Bearer token injected via platform ENV.
 - **Payload**: Standardized template parameters for `guest_name`, `ref`, and `link`.
 
+**Example Payload:**
+```json
+{
+  "template": {
+    "name": "innflex_booking_confirmed"
+  }
+}
+```
+
 ---
 
 ## 4. Final Reality Checklist
 - [x] Multi-tenant Property Loading
 - [x] Sequential Reference Generation (Verified Authority)
 - [x] WhatsApp Hub Webhook Integration (Production Intent)
-- [x] AI Prompt Seasonal Yield Awareness
+- [x] Standalone Concierge Logic (No External AI Dependency)
 - [x] Guest Portal Provisional Locking
 - [x] Audit-Ready Financial Reconciliation
 

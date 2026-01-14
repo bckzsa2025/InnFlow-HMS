@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ShieldCheck, Plus, LogIn, Activity, Cloud, X, Save, Trash2 } from 'lucide-react';
+import { ShieldCheck, Plus, LogIn, Activity, Cloud, X, Save, Trash2, LogOut } from 'lucide-react';
 import { Tenant } from '../types';
 
 interface DeveloperPortalProps {
@@ -8,9 +8,10 @@ interface DeveloperPortalProps {
   onUpdate: (tenants: Tenant[]) => void;
   onImpersonate?: (tenantName: string) => void;
   onLog?: (action: string, details: string) => void;
+  onLogout: () => void;
 }
 
-const DeveloperPortal: React.FC<DeveloperPortalProps> = ({ tenants, onUpdate, onImpersonate, onLog }) => {
+const DeveloperPortal: React.FC<DeveloperPortalProps> = ({ tenants, onUpdate, onImpersonate, onLog, onLogout }) => {
   const [editingTenant, setEditingTenant] = useState<Partial<Tenant> | null>(null);
 
   const handleSaveTenant = () => {
@@ -39,12 +40,20 @@ const DeveloperPortal: React.FC<DeveloperPortalProps> = ({ tenants, onUpdate, on
           </h1>
           <p className="text-slate-500">Multi-tenant infrastructure control panel.</p>
         </div>
-        <button 
-          onClick={() => setEditingTenant({ name: '', plan: 'Starter', status: 'Active', users: 1 })}
-          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:scale-105 transition"
-        >
-          <Plus size={20} /> New Business
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={onLogout}
+            className="flex items-center gap-2 bg-white text-slate-600 border border-slate-200 px-5 py-2.5 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition"
+          >
+            <LogOut size={20} /> Exit Console
+          </button>
+          <button 
+            onClick={() => setEditingTenant({ name: '', plan: 'Starter', status: 'Active', users: 1 })}
+            className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:scale-105 transition"
+          >
+            <Plus size={20} /> New Business
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
